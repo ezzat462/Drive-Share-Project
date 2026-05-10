@@ -13,6 +13,7 @@ import RenterDashboard from "./pages/RenterDashboard";
 import LicensePage from "./pages/LicensePage";
 import CarDetails from "./pages/CarDetails";
 import Favorites from "./pages/Favorites";
+import EditCar from './pages/EditCar';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -39,6 +40,7 @@ function App() {
             {/* Protected Routes: Owner Only */}
             <Route element={<ProtectedRoute allowedRoles={["CarOwner", "Admin"]} />}>
               <Route path="/owner" element={<OwnerDashboard />} />
+              <Route path="/owner/cars/:id/edit" element={<EditCar />} />
             </Route>
 
             {/* Protected Routes: User */}

@@ -50,7 +50,14 @@ export default function CarDetails() {
                         <h2>{car.brand} {car.model} ({car.year})</h2>
                         <h2>${car.pricePerDay}/day</h2>
                     </div>
-                    <p className="text-muted"><i className="bi bi-geo-alt"></i> {car.location}</p>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="d-flex gap-2">
+                            <span className="badge bg-secondary rounded-pill px-3">{['Sedan', 'SUV', 'Truck', 'Coupe', 'Convertible', 'Van', 'Other'][car.type || 0]}</span>
+                            <span className="badge bg-outline-secondary border text-secondary rounded-pill px-3">{car.transmission === 1 ? 'Manual' : 'Auto'}</span>
+                        </div>
+                        <p className="text-muted mb-0"><i className="bi bi-person-circle me-1"></i> Owner: {car.ownerName || 'Verified Owner'}</p>
+                    </div>
+                    <p className="text-muted"><i className="bi bi-geo-alt-fill me-1"></i> {car.location}</p>
                     <p>{car.description || "A beautiful car ready for your trip."}</p>
                     <button 
                         className="btn btn-primary btn-lg rounded-pill px-5 mt-3"

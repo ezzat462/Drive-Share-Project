@@ -27,7 +27,7 @@ export default function Navbar() {
       <div className="container-fluid">
         {/* Logo */}
         <Link className="navbar-brand fw-bold" to="/">
-          <span style={{ color: "#9b30ff" }}>🚗Drive</span>Share
+          <span style={{ color: "#9b30ff" }}>Drive</span>Share
         </Link>
 
         {/* Hamburger for mobile */}

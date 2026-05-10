@@ -27,7 +27,7 @@ API.interceptors.response.use(
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
-    
+
     // Safely swallow errors to prevent Uncaught Runtime Errors
     return Promise.resolve({
       data: {

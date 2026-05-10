@@ -24,6 +24,11 @@ const carService = {
   getMyCars: async () => {
     const response = await API.get("/cars/my-cars");
     return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await API.delete(`/cars/${id}`);
+    return response.data;
   }
 };
 

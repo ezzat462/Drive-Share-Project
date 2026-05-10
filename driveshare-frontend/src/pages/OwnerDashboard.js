@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import carService from "../services/carService";
 import bookingService from "../services/bookingService";
 import { AuthContext } from "../context/AuthContext";
@@ -6,6 +7,7 @@ import { toast } from 'react-toastify';
 
 export default function OwnerDashboard() {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
   const [myCars, setMyCars] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -25,6 +27,9 @@ export default function OwnerDashboard() {
     availableTo: ""
   });
   const [loading, setLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(null);
+
 
   useEffect(() => {
     fetchMyCars();
@@ -110,6 +115,32 @@ export default function OwnerDashboard() {
     }
   };
 
+  const handleDelete = async (carId) => {
+    setDeleteError(null);
+    setDeleteSuccess(null);
+
+    const confirmed = window.confirm('Are you sure you want to delete this car listing?');
+    if (!confirmed) return;
+
+    try {
+      const response = await carService.delete(carId);
+
+      if (response.success) {
+        setDeleteSuccess(response.message || 'Car deleted successfully.');
+        // Remove the car from local state without refetching
+        setMyCars(prev => prev.filter(c => c.id !== carId));
+        setTimeout(() => setDeleteSuccess(null), 4000);
+      } else {
+        setDeleteError(response.message || 'Failed to delete car.');
+        setTimeout(() => setDeleteError(null), 5000);
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Something went wrong. Please try again.';
+      setDeleteError(msg);
+      setTimeout(() => setDeleteError(null), 5000);
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
     return new Date(dateStr).toLocaleDateString();
@@ -130,6 +161,34 @@ export default function OwnerDashboard() {
   return (
     <div className="container mt-5">
       <h2>Owner Dashboard</h2>
+
+      {deleteError && (
+        <div
+          className="alert mb-4 rounded-3"
+          style={{
+            background: 'rgba(239,68,68,0.15)',
+            border: '1px solid rgba(239,68,68,0.4)',
+            color: '#fca5a5',
+            padding: '12px 16px',
+          }}
+        >
+          ⚠️ {deleteError}
+        </div>
+      )}
+
+      {deleteSuccess && (
+        <div
+          className="alert mb-4 rounded-3"
+          style={{
+            background: 'rgba(34,197,94,0.15)',
+            border: '1px solid rgba(34,197,94,0.4)',
+            color: '#86efac',
+            padding: '12px 16px',
+          }}
+        >
+          ✅ {deleteSuccess}
+        </div>
+      )}
       
       <div className="row mt-4">
         <div className="col-md-4">
@@ -225,9 +284,46 @@ export default function OwnerDashboard() {
                       <p className="small text-muted mb-2">
                         Available: {formatDate(car.availableFrom)} to {formatDate(car.availableTo)}
                       </p>
-                      <span className={`badge ${car.isApproved ? "bg-success" : "bg-warning text-dark"}`}>
-                        {car.isApproved ? "Approved" : "Pending Approval"}
-                      </span>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <span className={`badge ${car.isApproved ? 'bg-success' : 'bg-warning text-dark'}`}>
+                          {car.isApproved ? 'Approved' : 'Pending Approval'}
+                        </span>
+
+                        <div className="d-flex gap-2">
+                          {/* Edit button — always enabled */}
+                          <button
+                            onClick={() => navigate(`/owner/cars/${car.id}/edit`)}
+                            className="btn btn-sm rounded-pill"
+                            style={{
+                              background: 'rgba(59,130,246,0.15)',
+                              border: '1px solid rgba(59,130,246,0.4)',
+                              color: '#93c5fd',
+                              cursor: 'pointer',
+                            }}
+                            title="Edit listing"
+                          >
+                            Edit
+                          </button>
+
+                          {/* Delete button — unchanged logic */}
+                          <button
+                            onClick={() => handleDelete(car.id)}
+                            disabled={car.status === 'Rented' || car.isRented}
+                            className="btn btn-sm rounded-pill"
+                            style={{
+                              background: (car.status === 'Rented' || car.isRented)
+                                ? 'rgba(100,100,100,0.3)'
+                                : 'rgba(239,68,68,0.15)',
+                              border: '1px solid rgba(239,68,68,0.4)',
+                              color: (car.status === 'Rented' || car.isRented) ? '#888' : '#fca5a5',
+                              cursor: (car.status === 'Rented' || car.isRented) ? 'not-allowed' : 'pointer',
+                            }}
+                            title={(car.status === 'Rented' || car.isRented) ? 'Cannot delete a rented car' : 'Delete listing'}
+                          >
+                            {(car.status === 'Rented' || car.isRented) ? '🔒 Rented' : 'Delete'}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

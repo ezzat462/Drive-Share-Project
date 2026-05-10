@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import heroBg from '../assets/hero-bg.jpg';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import carService from "../services/carService";
@@ -14,6 +15,7 @@ export default function Home() {
   const [filterLocation, setFilterLocation] = useState("");
   const [filterMinPrice, setFilterMinPrice] = useState("");
   const [filterMaxPrice, setFilterMaxPrice] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -71,7 +73,7 @@ export default function Home() {
 
   const handleBookNow = (carId) => {
     if (!user) {
-      navigate("/login", { state: { from: "/", message: "Please log in to book a ride!" } });
+      setShowAuthModal(true);
     } else {
       navigate(`/booking/${carId}`);
     }
@@ -90,28 +92,127 @@ export default function Home() {
   return (
     <div className="container py-5 mt-4">
       {/* Hero Section */}
-      <div className="hero-section text-center p-5 rounded-4 shadow-lg mb-5"
+      <div
+        className="hero-section rounded-4 shadow-lg mb-5 position-relative overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
-          color: "#fff",
-          position: "relative",
-          overflow: "hidden"
-        }}>
-        <div style={{ position: "relative", zIndex: 2 }}>
-          <h1 className="display-4 fw-bold mb-3 mt-4">Find Your Perfect Drive 🚗</h1>
-          <p className="lead fs-4 opacity-75 mb-4">The ultimate marketplace for peer-to-peer car sharing.</p>
-          <div className="d-flex justify-content-center gap-3 mb-4">
-            <span className="badge bg-light text-dark px-3 py-2 rounded-pill shadow-sm">Verified Owners</span>
-            <span className="badge bg-light text-dark px-3 py-2 rounded-pill shadow-sm">Premium Fleet</span>
-            <span className="badge bg-light text-dark px-3 py-2 rounded-pill shadow-sm">24/7 Support</span>
+          minHeight: '420px',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        {/* Background image layer */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${heroBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            zIndex: 0,
+          }}
+        />
+
+        {/* Dark overlay so text stays readable */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, rgba(10,20,60,0.82) 0%, rgba(15,40,100,0.70) 50%, rgba(10,20,60,0.55) 100%)',
+            zIndex: 1,
+          }}
+        />
+
+        {/* Content */}
+        <div
+          className="w-100 text-center px-5 py-5"
+          style={{ position: 'relative', zIndex: 2 }}
+        >
+          <h1
+            className="display-4 fw-bold mb-3 mt-2"
+            style={{
+              color: '#ffffff',
+              textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+              letterSpacing: '-0.5px',
+            }}
+          >
+            Find Your Perfect Drive
+          </h1>
+
+          <p
+            className="lead fs-5 mb-4"
+            style={{ color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}
+          >
+            The ultimate marketplace for peer-to-peer car sharing.
+          </p>
+
+          {/* Badges */}
+          <div className="d-flex justify-content-center gap-3 mb-4 flex-wrap">
+            <span
+              className="px-3 py-2 rounded-pill fw-semibold"
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                color: '#fff',
+                fontSize: '0.875rem',
+              }}
+            >
+              Verified Owners
+            </span>
+            <span
+              className="px-3 py-2 rounded-pill fw-semibold"
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                color: '#fff',
+                fontSize: '0.875rem',
+              }}
+            >
+              Premium Fleet
+            </span>
+            <span
+              className="px-3 py-2 rounded-pill fw-semibold"
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                color: '#fff',
+                fontSize: '0.875rem',
+              }}
+            >
+              24/7 Support
+            </span>
           </div>
+
+          {/* CTA Button */}
+          <button
+            onClick={() => document.getElementById('cars-section')?.scrollIntoView({ behavior: 'smooth' })}
+            className="btn btn-lg rounded-pill px-5 py-2 fw-bold"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              color: '#fff',
+              border: 'none',
+              boxShadow: '0 4px 20px rgba(59,130,246,0.5)',
+              fontSize: '1rem',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 28px rgba(59,130,246,0.6)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(59,130,246,0.5)';
+            }}
+          >
+            Browse Cars →
+          </button>
         </div>
-        {/* Decorative backdrop elements */}
-        <div style={{ position: "absolute", top: "-20%", right: "-10%", width: "300px", height: "300px", background: "rgba(255,255,255,0.1)", borderRadius: "50%" }}></div>
-        <div style={{ position: "absolute", bottom: "-10%", left: "-10%", width: "200px", height: "200px", background: "rgba(255,255,255,0.05)", borderRadius: "50%" }}></div>
       </div>
 
-      <div className="mb-5">
+      <div id="cars-section" className="mb-5">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h2 className="fw-bold m-0 border-start border-primary border-4 ps-3">Available for rent</h2>
           <div className="dropdown">
@@ -294,10 +395,10 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="d-flex mt-3 mb-4 text-muted small gap-3">
-                    <span><i className="bi bi-person me-1"></i> 5 Seats</span>
-                    <span><i className="bi bi-gear me-1"></i> Auto</span>
-                    <span><i className="bi bi-fuel-pump me-1"></i> Electric</span>
+                  <div className="d-flex mt-3 mb-4 text-muted small gap-3 flex-wrap">
+                    <span title="Car Type"><i className="bi bi-tag me-1"></i> {['Sedan', 'SUV', 'Truck', 'Coupe', 'Convertible', 'Van', 'Other'][car.type || 0]}</span>
+                    <span title="Transmission"><i className="bi bi-gear me-1"></i> {car.transmission === 1 ? 'Manual' : 'Auto'}</span>
+                    <span title="Location"><i className="bi bi-geo-alt me-1"></i> {car.location}</span>
                   </div>
 
                   <div className="d-grid gap-2">
@@ -346,8 +447,46 @@ export default function Home() {
         .hero-section {
           background-size: cover;
           background-position: center;
+          transition: box-shadow 0.3s ease;
+        }
+        .hero-section:hover {
+          box-shadow: 0 1.5rem 4rem rgba(0,0,0,0.35) !important;
         }
       `}</style>
+      {/* Authentication Required Modal */}
+      {showAuthModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '20px', background: '#1a1a2e', color: '#fff' }}>
+              <div className="modal-header border-0 pb-0">
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowAuthModal(false)}></button>
+              </div>
+              <div className="modal-body text-center p-5 pt-2">
+                <div className="display-4 mb-4">🔑</div>
+                <h3 className="fw-bold mb-3">Authentication Required</h3>
+                <p className="text-light opacity-75 mb-4">
+                  You must be logged in to the website to rent a car. Join our community to start your journey!
+                </p>
+                <div className="d-grid gap-3">
+                  <button
+                    className="btn btn-primary rounded-pill py-2 fw-bold"
+                    onClick={() => navigate("/login")}
+                    style={{ background: 'linear-gradient(45deg, #6a0dad, #9b30ff)', border: 'none' }}
+                  >
+                    Log In
+                  </button>
+                  <button
+                    className="btn btn-outline-light rounded-pill py-2 fw-bold"
+                    onClick={() => navigate("/register")}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
