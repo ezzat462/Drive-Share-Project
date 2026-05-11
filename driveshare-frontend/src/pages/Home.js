@@ -30,8 +30,17 @@ export default function Home() {
     const matchesBrand =
       filterBrand === "" || car.brand?.toLowerCase().includes(filterBrand.toLowerCase());
 
+    const CAR_TYPE_MAP = {
+      'Sedan': 0,
+      'SUV': 1,
+      'Truck': 2,
+      'Coupe': 3,
+      'Convertible': 4,
+      'Van': 5,
+      'Other': 6,
+    };
     const matchesType =
-      filterType === "" || car.carType?.toLowerCase() === filterType.toLowerCase();
+      filterType === "" || car.type === CAR_TYPE_MAP[filterType];
 
     const matchesLocation =
       filterLocation === "" || car.location?.toLowerCase().includes(filterLocation.toLowerCase());
@@ -263,8 +272,9 @@ export default function Home() {
             <option value="Sedan" style={{ background: "#1a1a2e" }}>Sedan</option>
             <option value="SUV" style={{ background: "#1a1a2e" }}>SUV</option>
             <option value="Truck" style={{ background: "#1a1a2e" }}>Truck</option>
+            <option value="Coupe" style={{ background: "#1a1a2e" }}>Coupe</option>
+            <option value="Convertible" style={{ background: "#1a1a2e" }}>Convertible</option>
             <option value="Van" style={{ background: "#1a1a2e" }}>Van</option>
-            <option value="Sports" style={{ background: "#1a1a2e" }}>Sports</option>
             <option value="Other" style={{ background: "#1a1a2e" }}>Other</option>
           </select>
 

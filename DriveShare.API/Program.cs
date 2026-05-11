@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.SignalR;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DriveShare.API.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,10 @@ builder.Services.AddScoped<ICarService, CarService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Repository Pattern Registration
+builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<ICarRepository, CarRepository>();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 builder.Services.AddSignalR();
 

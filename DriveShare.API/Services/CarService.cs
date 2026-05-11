@@ -2,6 +2,7 @@ using DriveShare.API.Data;
 using DriveShare.API.DTOs.Common;
 using DriveShare.API.Models;
 using DriveShare.API.Models.Enums;
+using DriveShare.API.Repositories;
 using DriveShare.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,11 +10,13 @@ namespace DriveShare.API.Services
 {
     public class CarService : ICarService
     {
+        private readonly ICarRepository _carRepository;
         private readonly ApplicationDbContext _context;
         private readonly INotificationService _notificationService;
 
-        public CarService(ApplicationDbContext context, INotificationService notificationService)
+        public CarService(ICarRepository carRepository, ApplicationDbContext context, INotificationService notificationService)
         {
+            _carRepository = carRepository;
             _context = context;
             _notificationService = notificationService;
         }
@@ -29,51 +32,15 @@ namespace DriveShare.API.Services
             int page = 1, 
             int pageSize = 10)
         {
-            var query = _context.Cars
-                .Where(c => c.IsApproved)
-                .Include(c => c.Owner)
-                .AsQueryable();
- 
-            if (!string.IsNullOrWhiteSpace(brand))
-                query = query.Where(c => c.Brand.Contains(brand));
- 
-            if (!string.IsNullOrWhiteSpace(location))
-                query = query.Where(c => c.Location.Contains(location));
- 
-            if (minPrice.HasValue)
-                query = query.Where(c => c.PricePerDay >= minPrice.Value);
- 
-            if (maxPrice.HasValue)
-                query = query.Where(c => c.PricePerDay <= maxPrice.Value);
-
-            if (carType.HasValue)
-                query = query.Where(c => c.Type == carType.Value);
-
-            if (transmission.HasValue)
-                query = query.Where(c => c.Transmission == transmission.Value);
- 
-            var totalItems = await query.CountAsync();
-
-            // Apply Sorting
-            query = sortOrder switch
-            {
-                "price_asc" => query.OrderBy(c => c.PricePerDay),
-                "price_desc" => query.OrderByDescending(c => c.PricePerDay),
-                "newest" => query.OrderByDescending(c => c.Id),
-                _ => query.OrderByDescending(c => c.Id) // Default sorting
-            };
-
-            var items = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var items = await _carRepository.GetApprovedCarsAsync(brand, location, minPrice, maxPrice, carType, transmission, sortOrder, page, pageSize);
+            var totalItems = await _carRepository.CountApprovedCarsAsync(brand, location, minPrice, maxPrice, carType, transmission);
 
             var result = new PaginatedResult<CarPost>
             {
                 TotalItems = totalItems,
                 PageNumber = page,
                 PageSize = pageSize,
-                Items = items
+                Items = items.ToList()
             };
 
             return ApiResponse<PaginatedResult<CarPost>>.SuccessResponse(result);
@@ -81,10 +48,7 @@ namespace DriveShare.API.Services
 
         public async Task<ApiResponse<CarPost>> GetCarByIdAsync(int id)
         {
-            var car = await _context.Cars
-                .Include(c => c.Owner)
-                .Include(c => c.Ratings)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var car = await _carRepository.GetCarWithDetailsAsync(id);
             
             if (car == null) return ApiResponse<CarPost>.FailureResponse("Car not found");
             return ApiResponse<CarPost>.SuccessResponse(car);
@@ -112,8 +76,8 @@ namespace DriveShare.API.Services
             if (car.AvailableTo.Date <= car.AvailableFrom.Date)
                 return ApiResponse<CarPost>.FailureResponse("Available To date must be after Available From date.");
 
-            _context.Cars.Add(car);
-            await _context.SaveChangesAsync();
+            await _carRepository.AddAsync(car);
+            await _carRepository.SaveChangesAsync();
 
             // ► NOTIFICATION: Admin — "New car listing received from [User Name] and is pending approval."
             await _notificationService.SendNotificationToAdminsAsync(
@@ -127,7 +91,7 @@ namespace DriveShare.API.Services
 
         public async Task<ApiResponse<CarPost>> UpdateCarAsync(int id, CarPost car)
         {
-            var existingCar = await _context.Cars.FindAsync(id);
+            var existingCar = await _carRepository.GetByIdAsync(id);
             if (existingCar == null) return ApiResponse<CarPost>.FailureResponse("Car not found.");
 
             var owner = await _context.Users.FindAsync(existingCar.OwnerId);
@@ -158,21 +122,20 @@ namespace DriveShare.API.Services
             existingCar.AvailableTo = car.AvailableTo;
             existingCar.IsApproved = false; // Re-approval needed after edit
 
-            await _context.SaveChangesAsync();
+            await _carRepository.UpdateAsync(existingCar);
+            await _carRepository.SaveChangesAsync();
             return ApiResponse<CarPost>.SuccessResponse(existingCar, "Car updated successfully. Waiting for admin re-approval.");
         }
 
         public async Task<ApiResponse<List<CarPost>>> GetCarsByOwnerAsync(int ownerId)
         {
-            var cars = await _context.Cars.Where(c => c.OwnerId == ownerId).ToListAsync();
-            return ApiResponse<List<CarPost>>.SuccessResponse(cars);
+            var cars = await _carRepository.GetCarsByOwnerAsync(ownerId);
+            return ApiResponse<List<CarPost>>.SuccessResponse(cars.ToList());
         }
 
         public async Task<ApiResponse<bool>> DeleteCarAsync(int carId, int ownerId)
         {
-            var car = await _context.Cars
-                .Include(c => c.Bookings)
-                .FirstOrDefaultAsync(c => c.Id == carId && c.OwnerId == ownerId);
+            var car = await _carRepository.GetCarWithBookingsAsync(carId, ownerId);
 
             if (car == null) return ApiResponse<bool>.FailureResponse("Car not found or access denied.");
 
@@ -184,8 +147,8 @@ namespace DriveShare.API.Services
             if (hasUpcomingBookings)
                 return ApiResponse<bool>.FailureResponse("Cannot delete a car with upcoming accepted bookings.");
 
-            _context.Cars.Remove(car);
-            await _context.SaveChangesAsync();
+            await _carRepository.DeleteAsync(car);
+            await _carRepository.SaveChangesAsync();
             return ApiResponse<bool>.SuccessResponse(true, "Car deleted successfully.");
         }
     }
